@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------
+   Qontrol design tokens — stadium timing board
+   Pitch Ink / Turf Panel (surfaces) · Floodlight Amber (primary)
+   Siren Coral (urgency) · Photo-Finish Cyan (secondary) · Track Chalk (text)
+--------------------------------------------------------------- */
+@theme {
+  --color-pitch: #0e1b17;
+  --color-turf: #16241f;
+  --color-turf-light: #1e322a;
+  --color-amber: #ffb627;
+  --color-amber-dim: #cc9120;
+  --color-coral: #ff4361;
+  --color-cyan: #2fd1c5;
+  --color-chalk: #f4f1e6;
+  --color-chalk-dim: #a9b3ac;
+
+  --font-display: "Unbounded", sans-serif;
+  --font-body: "Instrument Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+@layer base {
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--color-pitch);
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255, 182, 39, 0.08), transparent),
+      radial-gradient(ellipse 60% 40% at 90% 100%, rgba(47, 209, 197, 0.06), transparent);
+    background-attachment: fixed;
+    color: var(--color-chalk);
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  /* Visible keyboard focus everywhere, replaces default outline */
+  :focus-visible {
+    outline: 2px solid var(--color-amber);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer utilities {
+  /* Split-flap digit flip — the signature motion, reused for timers,
+     room codes, scores and podium ranks wherever a value updates live. */
+  @keyframes flap-flip {
+    0% {
+      transform: rotateX(0deg);
+    }
+    45% {
+      transform: rotateX(-90deg);
+    }
+    55% {
+      transform: rotateX(-90deg);
+    }
+    100% {
+      transform: rotateX(0deg);
+    }
+  }
+
+  .animate-flap {
+    animation: flap-flip 0.45s cubic-bezier(0.45, 0, 0.55, 1);
+    transform-style: preserve-3d;
+  }
+
+  @keyframes live-pulse {
+    0%, 100% {
+      opacity: 1;
+      box-shadow: 0 0 0 0 rgba(255, 67, 97, 0.55);
+    }
+    50% {
+      opacity: 0.55;
+      box-shadow: 0 0 0 6px rgba(255, 67, 97, 0);
+    }
+  }
+
+  .animate-live-pulse {
+    animation: live-pulse 1.6s ease-in-out infinite;
+  }
+
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-rise-in {
+    animation: rise-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+/* Reduced motion: kill decorative animation, keep instant state changes */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
