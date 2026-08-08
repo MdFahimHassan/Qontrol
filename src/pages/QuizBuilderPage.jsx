@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { quizService } from '../services/quizService';
 import QuestionEditor from '../components/quiz-builder/QuestionEditor';
 import DoodleBackground from '../components/common/DoodleBackground';
+import CursorTrail from '../components/common/CursorTrail';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 
@@ -85,6 +86,7 @@ export default function QuizBuilderPage() {
   return (
     <div className="relative min-h-screen bg-pitch p-6 text-chalk overflow-hidden">
       <DoodleBackground variant="sparse" />
+      <CursorTrail />
       <div className="relative z-10 max-w-4xl mx-auto">
         <h1 className="font-display font-bold text-3xl mb-6">
           {id ? 'EDIT QUIZ' : 'CREATE NEW QUIZ'}

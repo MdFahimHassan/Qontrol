@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/authService';
 import DoodleBackground from '../components/common/DoodleBackground';
+import CursorTrail from '../components/common/CursorTrail';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 
@@ -32,6 +33,7 @@ export default function RegisterPage() {
   return (
     <div className="relative flex items-center justify-center min-h-screen px-4 bg-pitch overflow-hidden">
       <DoodleBackground variant="sparse" />
+      <CursorTrail />
       <div className="relative z-10 w-full max-w-md p-8 bg-turf rounded-xl shadow-2xl border border-turf-light animate-rise-in">
         <h2 className="font-display font-bold text-3xl text-center text-chalk mb-6">
           CREATE HOST ACCOUNT

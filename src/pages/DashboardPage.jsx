@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { quizService } from '../services/quizService';
 import { useAuth } from '../hooks/useAuth';
 import DoodleBackground from '../components/common/DoodleBackground';
+import CursorTrail from '../components/common/CursorTrail';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import ConfirmModal from '../components/common/ConfirmModal';
 import Button from '../components/common/Button';
@@ -45,6 +46,7 @@ export default function DashboardPage() {
   return (
     <div className="relative min-h-screen bg-pitch p-6 overflow-hidden">
       <DoodleBackground variant="sparse" />
+      <CursorTrail />
 
       <header className="relative z-10 max-w-5xl mx-auto flex justify-between items-center pb-6 border-b border-turf-light">
         <div>
