@@ -57,7 +57,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-pitch text-chalk">
+    <div className="h-dvh flex flex-col bg-pitch text-chalk overflow-hidden">
       {/* Scorebug bar — frames the page as a match already in progress */}
       <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-turf-light bg-turf/60 backdrop-blur-sm">
         <div className="flex items-center gap-2">
@@ -70,17 +70,20 @@ export default function LandingPage() {
         <span className="font-mono text-xs text-chalk-dim tabular-nums">HOST&nbsp;READY</span>
       </div>
 
-      <main className="relative flex-1 flex flex-col items-center justify-center px-4 text-center py-16 overflow-hidden">
+      <main className="relative flex-1 min-h-0 flex flex-col items-center justify-center px-4 text-center py-6 sm:py-16 overflow-y-auto overflow-x-hidden">
         <DoodleBackground />
         <CursorTrail />
 
-        <h1 className="relative z-10 font-display font-black text-7xl sm:text-8xl md:text-9xl leading-none tracking-tight mb-5 text-chalk">
+        <h1
+          className="relative z-10 font-display font-black leading-none tracking-tight mb-3 sm:mb-5 text-chalk"
+          style={{ fontSize: 'clamp(2.75rem, 13vw, 6rem)' }}
+        >
           <FlapWord text="QONTROL" />
         </h1>
 
         <p
-          className="relative z-10 font-doodle font-bold text-xl sm:text-2xl mb-10 animate-rise-in"
-          style={{ animationDelay: '450ms' }}
+          className="relative z-10 font-doodle font-bold mb-6 sm:mb-10 animate-rise-in"
+          style={{ fontSize: 'clamp(1.05rem, 4vw, 1.5rem)', animationDelay: '450ms' }}
         >
           <Scribble type="circle" color="var(--color-amber)" delay={900}>
             <span className="text-amber">SPEED.</span>
@@ -92,7 +95,7 @@ export default function LandingPage() {
         </p>
 
         <div
-          className="relative z-10 flex flex-col sm:flex-row gap-4 w-full max-w-xs sm:max-w-md animate-rise-in"
+          className="relative z-10 flex flex-col sm:flex-row gap-3 w-full max-w-xs sm:max-w-md animate-rise-in"
           style={{ animationDelay: '550ms' }}
         >
           {isAuthenticated ? (
@@ -112,13 +115,22 @@ export default function LandingPage() {
         </div>
 
         <div
-          className="relative z-10 flex flex-wrap justify-center gap-3 mt-12 animate-rise-in"
+          className="relative z-10 mt-4 animate-rise-in"
+          style={{ animationDelay: '600ms' }}
+        >
+          <Button to="/join" variant="dashed" size="md">
+            GOT A ROOM CODE? JOIN A GAME →
+          </Button>
+        </div>
+
+        <div
+          className="relative z-10 flex flex-wrap justify-center gap-2 mt-6 sm:mt-12 animate-rise-in"
           style={{ animationDelay: '650ms' }}
         >
           {['SPEED SCORING', 'LIVE LEADERBOARD', 'ROOM CODE JOIN'].map((label) => (
             <span
               key={label}
-              className="font-doodle text-sm tracking-wide text-cyan px-3 py-1.5 rounded-full border border-cyan/30 bg-cyan/5 transition-transform hover:-rotate-2 hover:scale-105"
+              className="font-doodle text-xs sm:text-sm tracking-wide text-cyan px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full border border-cyan/30 bg-cyan/5 transition-transform hover:-rotate-2 hover:scale-105"
             >
               {label}
             </span>

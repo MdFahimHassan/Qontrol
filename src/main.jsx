@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
+import { GameSocketProvider } from './context/GameSocketContext.jsx';
 // Self-hosted (bundled by Vite, no external network call — see the
 // landing page doodle font issue: Google Fonts was silently getting
 // blocked by a browser extension for at least one user).
@@ -14,7 +15,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
-        <App />
+        <GameSocketProvider>
+          <App />
+        </GameSocketProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>

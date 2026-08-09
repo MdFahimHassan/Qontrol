@@ -8,4 +8,10 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  // sockjs-client (used for the game WebSocket) expects Node's `global`
+  // object, which Vite doesn't polyfill in the browser like webpack did.
+  // Without this, sockjs-client.js throws "global is not defined" on load.
+  define: {
+    global: 'window',
+  },
 });

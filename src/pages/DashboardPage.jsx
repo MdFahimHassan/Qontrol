@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { quizService } from '../services/quizService';
+import { sessionService } from '../services/sessionService';
 import { useAuth } from '../hooks/useAuth';
 import DoodleBackground from '../components/common/DoodleBackground';
 import CursorTrail from '../components/common/CursorTrail';
@@ -13,6 +14,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [hostingId, setHostingId] = useState(null);
 
   const { logout, user } = useAuth();
   const navigate = useNavigate();
@@ -31,6 +33,18 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchQuizzes();
   }, []);
+
+  const handleHostGame = async (quiz) => {
+    setHostingId(quiz.id);
+    setError('');
+    try {
+      const { roomCode } = await sessionService.startSession(quiz.id);
+      navigate(`/host/lobby/${roomCode}`, { state: { quizTitle: quiz.title } });
+    } catch (err) {
+      setError('Failed to start the game session.');
+      setHostingId(null);
+    }
+  };
 
   const confirmDelete = async () => {
     const id = pendingDeleteId;
@@ -107,7 +121,17 @@ export default function DashboardPage() {
                   </p>
                 </div>
 
-                <div className="flex gap-2 mt-4 pt-4 border-t border-turf-light">
+                <Button
+                  size="sm"
+                  className="w-full mt-4"
+                  loading={hostingId === quiz.id}
+                  disabled={hostingId === quiz.id}
+                  onClick={() => handleHostGame(quiz)}
+                >
+                  {hostingId === quiz.id ? 'STARTING…' : '▶ HOST GAME'}
+                </Button>
+
+                <div className="flex gap-2 mt-2 pt-4 border-t border-turf-light">
                   <Link
                     to={`/quiz/edit/${quiz.id}`}
                     className="flex-1 text-center py-2 bg-turf-light text-chalk rounded-lg hover:bg-turf-light/70 text-sm font-medium transition-colors"
