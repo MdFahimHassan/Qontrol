@@ -3,8 +3,6 @@ package com.quizapp.game.service;
 import com.quizapp.game.GameDtos.LeaderboardEntry;
 import com.quizapp.game.GameException;
 import com.quizapp.game.model.Player;
-import com.quizapp.game.service.GameLogic;
-
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

@@ -49,6 +49,6 @@ public final class GameDtos {
     public record AnswerResult(int questionIndex, boolean answered, boolean correct,
                                int pointsAwarded, int totalScore, int rank) {}
     public record SyncData(String role, JoinAck me, GameEvent event, AnswerResult lastResult,
-                           Integer answeredOption, long serverNowMs) {}
+                           Integer answeredOption, QuestionData question, long serverNowMs) {}
     public record ErrorEvent(String code, String message) {}
 }

@@ -92,23 +92,28 @@ export default function LandingPage() {
         </p>
 
         <div
-          className="relative z-10 flex flex-col sm:flex-row gap-4 w-full max-w-xs sm:max-w-md animate-rise-in"
+          className="relative z-10 flex flex-col gap-4 w-full max-w-xs sm:max-w-md animate-rise-in"
           style={{ animationDelay: '550ms' }}
         >
-          {isAuthenticated ? (
-            <Button to="/dashboard" size="lg" className="w-full">
-              GO TO HOST DASHBOARD
-            </Button>
-          ) : (
-            <>
-              <Button to="/login" size="lg" className="w-full">
-                HOST LOGIN
+          <Button to="/join" size="lg" className="w-full">
+            JOIN A GAME
+          </Button>
+          <div className="flex flex-col sm:flex-row gap-4">
+            {isAuthenticated ? (
+              <Button to="/dashboard" variant="ghost" size="lg" className="w-full">
+                GO TO HOST DASHBOARD
               </Button>
-              <Button to="/register" variant="ghost" size="lg" className="w-full">
-                REGISTER AS HOST
-              </Button>
-            </>
-          )}
+            ) : (
+              <>
+                <Button to="/login" variant="ghost" size="lg" className="w-full">
+                  HOST LOGIN
+                </Button>
+                <Button to="/register" variant="ghost" size="lg" className="w-full">
+                  REGISTER AS HOST
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         <div

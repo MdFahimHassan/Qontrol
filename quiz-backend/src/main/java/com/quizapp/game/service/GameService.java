@@ -179,6 +179,13 @@ public class GameService {
                 // In the lobby a disconnected player is removed, so just fall through and join fresh.
             }
 
+            // A retried join from the same connection just gets its ack again.
+            Player already = session.findPlayerByConnection(connId);
+            if (already != null) {
+                sendPrivate(connId, "/queue/join", ack(session, already));
+                return;
+            }
+
             if (session.getState() != GameState.LOBBY) {
                 throw new GameException("GAME_IN_PROGRESS", "This game has already started");
             }
@@ -347,7 +354,9 @@ public class GameService {
             String role = host ? "HOST" : (player != null ? "PLAYER" : "SPECTATOR");
 
             Integer answeredOption = null;
-            if (player != null && session.getState() == GameState.QUESTION) {
+            boolean questionOnScreen = session.getState() == GameState.QUESTION
+                    || session.getState() == GameState.REVEAL;
+            if (player != null && questionOnScreen) {
                 PlayerAnswer answer = session.getCurrentAnswers().get(player.getId());
                 if (answer != null) answeredOption = answer.optionIndex();
             }
@@ -356,6 +365,7 @@ public class GameService {
                     session.getLastEvent(),
                     player == null ? null : player.getLastResult(),
                     answeredOption,
+                    questionOnScreen ? session.getLastQuestion() : null,
                     System.currentTimeMillis()));
         }
     }
@@ -406,9 +416,11 @@ public class GameService {
         for (GameOption o : q.options()) {
             options.add(new OptionData(o.index(), o.text())); // NOTE: no `correct` flag
         }
-        publish(session, new GameEvent(QUESTION, new QuestionData(index, session.getQuestions().size(),
+        QuestionData questionData = new QuestionData(index, session.getQuestions().size(),
                 q.text(), q.imageUrl(), options, q.timeLimitSeconds(), q.points(),
-                now, now + limitMs, now)));
+                now, now + limitMs, now);
+        session.setLastQuestion(questionData);
+        publish(session, new GameEvent(QUESTION, questionData));
 
         final String roomCode = session.getRoomCode();
         session.setTimer(scheduler.schedule(() -> onTimerExpired(roomCode, index),

@@ -136,6 +136,7 @@ export default function QuizBuilderPage() {
               <QuestionEditor
                 key={index}
                 qIndex={index}
+                total={questions.length}
                 question={q}
                 onChange={handleQuestionChange}
                 onRemove={handleRemoveQuestion}

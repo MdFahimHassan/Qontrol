@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { quizService } from '../services/quizService';
+import { gameService } from '../services/gameService';
+import { unlockAudio } from '../utils/sound';
 import { useAuth } from '../hooks/useAuth';
 import DoodleBackground from '../components/common/DoodleBackground';
 import CursorTrail from '../components/common/CursorTrail';
@@ -13,6 +15,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [hostingId, setHostingId] = useState(null);
+  const location = useLocation();
+  const [notice, setNotice] = useState(location.state?.notice || '');
 
   const { logout, user } = useAuth();
   const navigate = useNavigate();
@@ -31,6 +36,19 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchQuizzes();
   }, []);
+
+  const hostGame = async (quizId) => {
+    setNotice('');
+    setHostingId(quizId);
+    unlockAudio(); // lets the game screens play sounds later
+    try {
+      const { roomCode } = await gameService.createGame(quizId);
+      navigate(`/host/${roomCode}`);
+    } catch (err) {
+      setNotice(err.response?.data?.message || 'Could not start a game. Try again.');
+      setHostingId(null);
+    }
+  };
 
   const confirmDelete = async () => {
     const id = pendingDeleteId;
@@ -71,6 +89,11 @@ export default function DashboardPage() {
       </header>
 
       <main className="relative z-10 max-w-5xl mx-auto mt-8">
+        {notice && (
+          <p role="alert" className="mb-6 rounded-lg border border-amber/30 bg-amber/10 px-4 py-3 text-sm text-amber">
+            {notice}
+          </p>
+        )}
         {loading ? (
           <div className="flex items-center gap-2 text-chalk-dim font-mono text-sm py-8">
             <LoadingSpinner size={18} />
@@ -108,6 +131,14 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="flex gap-2 mt-4 pt-4 border-t border-turf-light">
+                  <Button
+                    size="sm"
+                    className="flex-1"
+                    loading={hostingId === quiz.id}
+                    onClick={() => hostGame(quiz.id)}
+                  >
+                    Host live
+                  </Button>
                   <Link
                     to={`/quiz/edit/${quiz.id}`}
                     className="flex-1 text-center py-2 bg-turf-light text-chalk rounded-lg hover:bg-turf-light/70 text-sm font-medium transition-colors"

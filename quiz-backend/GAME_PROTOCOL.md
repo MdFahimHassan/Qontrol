@@ -16,7 +16,7 @@ Transport: **STOMP over SockJS** at `{API}/ws` (e.g. `http://localhost:8080/ws`)
 ## Order of operations (important)
 1. Host: `POST /api/games {quizId}` → `{ roomCode, quizTitle, questionCount }`
 2. Anyone: `GET /api/games/{roomCode}/status` (public) → `{ state, playerCount, quizTitle }` — use on the join screen.
-3. Connect STOMP, then **subscribe first**, *then* send:
+3. Connect STOMP, then **subscribe first**, *then* send (the web client also waits ~150 ms and resends `join`/`sync` until answered, because frames can overtake each other on the server; both are idempotent):
    `/topic/room/{code}`, `/user/queue/join`, `/user/queue/sync`, `/user/queue/errors`,
    `/user/queue/answer-ack`, `/user/queue/answer-result`, `/user/queue/kicked`.
    (Private replies are only delivered to subscriptions that already exist.)
@@ -57,7 +57,7 @@ The server owns the real clock and auto-reveals ~0.5 s after `endsAtMs`.
 | `join` | `{ roomCode, playerId, reconnectToken, nickname }` — **store `reconnectToken`** (sessionStorage) |
 | `answer-ack` | `{ questionIndex }` — "answer received" (does not say if it was right) |
 | `answer-result` | `{ questionIndex, answered, correct, pointsAwarded, totalScore, rank }` — sent at reveal |
-| `sync` | `{ role: HOST\|PLAYER\|SPECTATOR, me, event, lastResult, answeredOption, serverNowMs }` — `event` is the latest broadcast |
+| `sync` | `{ role: HOST\|PLAYER\|SPECTATOR, me, event, lastResult, answeredOption, question, serverNowMs }` — `event` is the latest broadcast; `question` is the question on screen (so a refresh during REVEAL can redraw it); `answeredOption` is the option this player picked, during QUESTION and REVEAL |
 | `kicked` | `{ code, message }` |
 | `errors` | `{ code, message }` |
 

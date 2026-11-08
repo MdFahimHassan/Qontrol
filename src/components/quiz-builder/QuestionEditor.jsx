@@ -1,7 +1,11 @@
+import { useState } from 'react';
 import OptionInput from './OptionInput';
+import QuizPreview from './QuizPreview';
 import Input from '../common/Input';
 
-export default function QuestionEditor({ question, qIndex, onChange, onRemove }) {
+export default function QuestionEditor({ question, qIndex, total = 1, onChange, onRemove }) {
+  const [showPreview, setShowPreview] = useState(false);
+
   const handleOptionChange = (oIndex, field, value) => {
     const updatedOptions = question.options.map((opt, i) => {
       if (i === oIndex) return { ...opt, [field]: value };
@@ -18,13 +22,23 @@ export default function QuestionEditor({ question, qIndex, onChange, onRemove })
         <h4 className="font-display font-bold text-lg text-chalk">
           QUESTION {qIndex + 1}
         </h4>
-        <button
-          type="button"
-          onClick={() => onRemove(qIndex)}
-          className="text-coral hover:text-coral/80 text-sm font-semibold transition-all hover:-translate-y-px"
-        >
-          Remove Question
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => setShowPreview((v) => !v)}
+            aria-expanded={showPreview}
+            className="text-cyan hover:text-cyan/80 text-sm font-semibold transition-all hover:-translate-y-px"
+          >
+            {showPreview ? 'Hide preview' : 'Preview'}
+          </button>
+          <button
+            type="button"
+            onClick={() => onRemove(qIndex)}
+            className="text-coral hover:text-coral/80 text-sm font-semibold transition-all hover:-translate-y-px"
+          >
+            Remove Question
+          </button>
+        </div>
       </div>
 
       <Input
@@ -68,6 +82,8 @@ export default function QuestionEditor({ question, qIndex, onChange, onRemove })
           />
         ))}
       </div>
+
+      {showPreview && <QuizPreview question={question} index={qIndex} total={total} />}
     </div>
   );
 }

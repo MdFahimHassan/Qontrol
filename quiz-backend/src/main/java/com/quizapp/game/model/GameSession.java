@@ -1,6 +1,7 @@
 package com.quizapp.game.model;
 
 import com.quizapp.game.GameDtos.GameEvent;
+import com.quizapp.game.GameDtos.QuestionData;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,6 +33,7 @@ public class GameSession {
     private long questionEndsAtMs;
     private ScheduledFuture<?> timer;
     private GameEvent lastEvent;
+    private QuestionData lastQuestion;
     private volatile long lastActivityMs = System.currentTimeMillis();
 
     public GameSession(String roomCode, Long hostUserId, Long quizId, String quizTitle,
@@ -58,6 +60,9 @@ public class GameSession {
     public long getQuestionEndsAtMs() { return questionEndsAtMs; }
     public GameEvent getLastEvent() { return lastEvent; }
     public void setLastEvent(GameEvent lastEvent) { this.lastEvent = lastEvent; }
+    /** The QUESTION payload currently on screen (kept so a refresh during REVEAL can redraw it). */
+    public QuestionData getLastQuestion() { return lastQuestion; }
+    public void setLastQuestion(QuestionData lastQuestion) { this.lastQuestion = lastQuestion; }
 
     public GameQuestion currentQuestion() {
         return questions.get(currentQuestionIndex);
