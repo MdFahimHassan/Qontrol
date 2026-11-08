@@ -1,4 +1,4 @@
-package com.quizapp;
+package com.quizapp.game.service;
 
 import com.quizapp.game.GameDtos.LeaderboardEntry;
 import com.quizapp.game.GameException;
