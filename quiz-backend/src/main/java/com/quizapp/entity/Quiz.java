@@ -36,6 +36,7 @@ public class Quiz {
     private LocalDateTime createdAt;
 
     @Builder.Default
+    @OrderBy("id ASC")
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Question> questions = new ArrayList<>();
 

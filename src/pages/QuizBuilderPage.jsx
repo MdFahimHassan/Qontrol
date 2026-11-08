@@ -34,23 +34,23 @@ export default function QuizBuilderPage() {
     setQuestions([
       ...questions,
       {
-        question_text: '',
-        time_limit_seconds: 20,
+        questionText: '',
+        timeLimitSeconds: 20,
         points: 1000,
         options: [
-          { option_text: '', is_correct: false },
-          { option_text: '', is_correct: false },
-          { option_text: '', is_correct: false },
-          { option_text: '', is_correct: false },
+          { optionText: '', isCorrect: false },
+          { optionText: '', isCorrect: false },
+          { optionText: '', isCorrect: false },
+          { optionText: '', isCorrect: false },
         ],
       },
     ]);
   };
 
   const handleQuestionChange = (index, field, value) => {
-    const updated = [...questions];
-    updated[index][field] = value;
-    setQuestions(updated);
+    setQuestions((prev) =>
+      prev.map((q, i) => (i === index ? { ...q, [field]: value } : q))
+    );
   };
 
   const handleRemoveQuestion = (index) => {
@@ -64,6 +64,19 @@ export default function QuizBuilderPage() {
     if (questions.length === 0) {
       setError('Please add at least one question.');
       return;
+    }
+
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      if (!q.questionText.trim()) {
+        setError(`Question ${i + 1} needs some text.`);
+        return;
+      }
+      const correctCount = q.options.filter((o) => o.isCorrect).length;
+      if (correctCount !== 1) {
+        setError(`Question ${i + 1} needs exactly one correct answer selected.`);
+        return;
+      }
     }
 
     setLoading(true);

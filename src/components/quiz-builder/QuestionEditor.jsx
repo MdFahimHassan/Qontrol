@@ -3,8 +3,12 @@ import Input from '../common/Input';
 
 export default function QuestionEditor({ question, qIndex, onChange, onRemove }) {
   const handleOptionChange = (oIndex, field, value) => {
-    const updatedOptions = [...question.options];
-    updatedOptions[oIndex] = { ...updatedOptions[oIndex], [field]: value };
+    const updatedOptions = question.options.map((opt, i) => {
+      if (i === oIndex) return { ...opt, [field]: value };
+      // Selecting a correct answer deselects every other option.
+      if (field === 'isCorrect' && value) return { ...opt, isCorrect: false };
+      return opt;
+    });
     onChange(qIndex, 'options', updatedOptions);
   };
 
@@ -26,8 +30,8 @@ export default function QuestionEditor({ question, qIndex, onChange, onRemove })
       <Input
         label="Question Text"
         required
-        value={question.question_text}
-        onChange={(e) => onChange(qIndex, 'question_text', e.target.value)}
+        value={question.questionText}
+        onChange={(e) => onChange(qIndex, 'questionText', e.target.value)}
         placeholder="What is the capital of France?"
       />
 
@@ -37,8 +41,8 @@ export default function QuestionEditor({ question, qIndex, onChange, onRemove })
           type="number"
           min="5"
           max="120"
-          value={question.time_limit_seconds}
-          onChange={(e) => onChange(qIndex, 'time_limit_seconds', parseInt(e.target.value) || 20)}
+          value={question.timeLimitSeconds}
+          onChange={(e) => onChange(qIndex, 'timeLimitSeconds', parseInt(e.target.value) || 20)}
           fieldClassName="font-mono"
         />
         <Input
@@ -52,13 +56,14 @@ export default function QuestionEditor({ question, qIndex, onChange, onRemove })
 
       <div className="space-y-3 pt-2">
         <label className="block font-doodle text-base text-amber/90">
-          Options — tick the box next to the correct answer
+          Options — select the correct answer
         </label>
         {question.options.map((option, oIndex) => (
           <OptionInput
             key={oIndex}
             index={oIndex}
             option={option}
+            groupName={`correct-${qIndex}`}
             onChange={handleOptionChange}
           />
         ))}

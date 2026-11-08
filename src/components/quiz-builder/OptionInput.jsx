@@ -1,18 +1,21 @@
 import Input from '../common/Input';
 
-export default function OptionInput({ index, option, onChange }) {
+// Radio (not checkbox): a question has exactly one correct option.
+export default function OptionInput({ index, option, groupName, onChange }) {
   return (
     <div className="flex items-center gap-3">
       <input
-        type="checkbox"
-        checked={option.is_correct}
-        onChange={(e) => onChange(index, 'is_correct', e.target.checked)}
-        className="w-5 h-5 accent-cyan rounded cursor-pointer"
+        type="radio"
+        name={groupName}
+        checked={option.isCorrect}
+        onChange={() => onChange(index, 'isCorrect', true)}
+        aria-label={`Mark option ${index + 1} as the correct answer`}
+        className="w-5 h-5 accent-cyan cursor-pointer"
       />
       <Input
         required
-        value={option.option_text}
-        onChange={(e) => onChange(index, 'option_text', e.target.value)}
+        value={option.optionText}
+        onChange={(e) => onChange(index, 'optionText', e.target.value)}
         placeholder={`Option ${index + 1}`}
         className="flex-1"
       />

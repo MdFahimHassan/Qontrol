@@ -38,6 +38,7 @@ public class Question {
     private Integer points = 1000;
 
     @Builder.Default
+    @OrderBy("id ASC")
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Option> options = new ArrayList<>();
 

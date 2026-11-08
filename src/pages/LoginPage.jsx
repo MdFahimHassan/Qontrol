@@ -23,7 +23,9 @@ export default function LoginPage() {
 
     try {
       const data = await authService.login({ email, password });
-      login(data.token, data.user || { email });
+      // Backend returns a flat { token, id, username, email } — keep everything but the token as the user.
+      const { token, ...user } = data;
+      login(token, user);
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to login. Check your credentials.');

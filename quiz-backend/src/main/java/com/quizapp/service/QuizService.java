@@ -10,6 +10,7 @@ import com.quizapp.entity.Option;
 import com.quizapp.entity.Question;
 import com.quizapp.entity.Quiz;
 import com.quizapp.entity.User;
+import com.quizapp.exception.BadRequestException;
 import com.quizapp.exception.ResourceNotFoundException;
 import com.quizapp.exception.UnauthorizedAccessException;
 import com.quizapp.repository.QuizRepository;
@@ -29,6 +30,7 @@ public class QuizService {
 
     @Transactional
     public QuizResponse createQuiz(CreateQuizRequest request, User currentUser) {
+        validateQuestions(request);
         Quiz quiz = Quiz.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
@@ -80,6 +82,7 @@ public class QuizService {
 
     @Transactional
     public QuizResponse updateQuiz(Long id, CreateQuizRequest request, User currentUser) {
+        validateQuestions(request);
         Quiz quiz = quizRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found with id: " + id));
 
@@ -117,6 +120,36 @@ public class QuizService {
 
         Quiz updatedQuiz = quizRepository.save(quiz);
         return mapToQuizResponse(updatedQuiz);
+    }
+
+    /** Loads a quiz for hosting a live game. Only the owner may host it. */
+    @Transactional(readOnly = true)
+    public QuizResponse getOwnedQuiz(Long id, User currentUser) {
+        Quiz quiz = quizRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Quiz not found with id: " + id));
+        if (!quiz.getCreatedBy().getId().equals(currentUser.getId())) {
+            throw new UnauthorizedAccessException("You are not authorized to host this quiz");
+        }
+        return mapToQuizResponse(quiz);
+    }
+
+    /** Every question needs at least 2 options and exactly one correct one. */
+    private void validateQuestions(CreateQuizRequest request) {
+        if (request.getQuestions() == null) {
+            return;
+        }
+        int number = 0;
+        for (CreateQuestionRequest q : request.getQuestions()) {
+            number++;
+            List<CreateOptionRequest> options = q.getOptions();
+            if (options == null || options.size() < 2) {
+                throw new BadRequestException("Question " + number + " needs at least 2 options");
+            }
+            long correct = options.stream().filter(o -> Boolean.TRUE.equals(o.getIsCorrect())).count();
+            if (correct != 1) {
+                throw new BadRequestException("Question " + number + " must have exactly one correct option");
+            }
+        }
     }
 
     @Transactional
