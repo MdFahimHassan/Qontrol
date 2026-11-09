@@ -1,0 +1,16 @@
+# dependencies and build output
+node_modules/
+dist/
+quiz-backend/target/
+
+# local environment (copy .env.example to .env.local and edit)
+.env.local
+.env.*.local
+
+# editor / OS
+.idea/
+.vscode/*
+!.vscode/settings.json
+.DS_Store
+Thumbs.db
+*.log

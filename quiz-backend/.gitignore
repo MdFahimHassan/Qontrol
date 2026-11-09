@@ -1,16 +1,33 @@
-# dependencies and build output
-node_modules/
-dist/
-quiz-backend/target/
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
 
-# local environment (copy .env.example to .env.local and edit)
-.env.local
-.env.*.local
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
 
-# editor / OS
-.idea/
-.vscode/*
-!.vscode/settings.json
-.DS_Store
-Thumbs.db
-*.log
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
