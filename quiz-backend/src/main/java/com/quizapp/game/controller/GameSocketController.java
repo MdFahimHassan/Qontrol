@@ -5,7 +5,9 @@ import com.quizapp.game.GameDtos.ErrorEvent;
 import com.quizapp.game.GameDtos.JoinRequest;
 import com.quizapp.game.GameDtos.KickRequest;
 import com.quizapp.game.GameException;
+import com.quizapp.game.config.ClientIpInterceptor;
 import com.quizapp.game.service.GameService;
+import com.quizapp.security.RateLimitService;
 import com.quizapp.security.UserPrincipal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,11 +15,13 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
+import java.util.Map;
 
 /**
  * Thin STOMP adapter: figures out WHO is calling, then hands off to GameService.
@@ -29,16 +33,21 @@ public class GameSocketController {
     private static final Logger log = LoggerFactory.getLogger(GameSocketController.class);
 
     private final GameService gameService;
+    private final RateLimitService rateLimits;
 
-    public GameSocketController(GameService gameService) {
+    public GameSocketController(GameService gameService, RateLimitService rateLimits) {
         this.gameService = gameService;
+        this.rateLimits = rateLimits;
     }
 
     // ---------- player ----------
 
     @MessageMapping("/game/{roomCode}/join")
     public void join(@DestinationVariable String roomCode, Principal principal,
-                     @Payload JoinRequest request) {
+                     SimpMessageHeaderAccessor headers, @Payload JoinRequest request) {
+        if (!rateLimits.allowJoin(clientIp(headers), principal.getName())) {
+            throw new GameException("RATE_LIMITED", "Too many join attempts. Wait a minute and try again.");
+        }
         gameService.join(roomCode, principal.getName(), request);
     }
 
@@ -96,6 +105,12 @@ public class GameSocketController {
     public ErrorEvent onUnexpected(Exception ex) {
         log.warn("Unexpected error handling STOMP message", ex);
         return new ErrorEvent("INVALID_MESSAGE", "Could not process that message");
+    }
+
+    private static String clientIp(SimpMessageHeaderAccessor headers) {
+        Map<String, Object> attributes = headers.getSessionAttributes();
+        Object ip = attributes == null ? null : attributes.get(ClientIpInterceptor.ATTRIBUTE);
+        return ip == null ? "unknown" : ip.toString();
     }
 
     /** Host connections carry the JWT-authenticated user; guests have no user id. */

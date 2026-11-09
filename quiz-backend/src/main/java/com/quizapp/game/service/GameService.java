@@ -72,6 +72,10 @@ public class GameService {
     public static final String CANCELLED = "CANCELLED";
 
     private static final int MAX_PLAYERS = 200;
+    /** A host can have this many games open at once (stops one account from filling memory). */
+    static final int MAX_GAMES_PER_HOST = 10;
+    /** An empty lobby nobody has touched for this long is considered abandoned. */
+    static final long ABANDONED_LOBBY_MS = TimeUnit.MINUTES.toMillis(1);
     private static final int REVEAL_LEADERBOARD_SIZE = 5;
     /** Network grace: an answer that arrives this long after the deadline still counts. */
     private static final long ANSWER_GRACE_MS = 500;
@@ -111,6 +115,12 @@ public class GameService {
             questions.add(toGameQuestion(q, ++number));
         }
 
+        removeAbandonedLobbies(host.getId());
+        if (countOpenGames(host.getId()) >= MAX_GAMES_PER_HOST) {
+            throw new GameException("TOO_MANY_GAMES",
+                    "You already have " + MAX_GAMES_PER_HOST + " games open. End one before starting another.");
+        }
+
         GameSession session = registry.create(code ->
                 new GameSession(code, host.getId(), quiz.getId(), quiz.getTitle(), questions));
         synchronized (session) {
@@ -118,6 +128,32 @@ public class GameService {
         }
         log.info("Game {} created for quiz {} by user {}", session.getRoomCode(), quiz.getId(), host.getId());
         return new CreateGameResponse(session.getRoomCode(), quiz.getTitle(), questions.size());
+    }
+
+    /** Empty, untouched lobbies from a host's earlier clicks are dropped when they start a new game. */
+    private void removeAbandonedLobbies(Long hostUserId) {
+        long now = System.currentTimeMillis();
+        for (GameSession existing : registry.all()) {
+            synchronized (existing) {
+                if (hostUserId.equals(existing.getHostUserId()) && isAbandonedLobby(existing, now)) {
+                    registry.remove(existing.getRoomCode());
+                }
+            }
+        }
+    }
+
+    private int countOpenGames(Long hostUserId) {
+        int count = 0;
+        for (GameSession existing : registry.all()) {
+            if (hostUserId.equals(existing.getHostUserId())) count++;
+        }
+        return count;
+    }
+
+    static boolean isAbandonedLobby(GameSession session, long now) {
+        return session.getState() == GameState.LOBBY
+                && session.playerCount() == 0
+                && now - session.getLastActivityMs() > ABANDONED_LOBBY_MS;
     }
 
     public GameStatusResponse status(String roomCode) {
@@ -377,8 +413,12 @@ public class GameService {
     @EventListener
     public void onDisconnect(SessionDisconnectEvent event) {
         Principal user = event.getUser();
-        if (user == null) return;
-        String connId = user.getName();
+        if (user != null) {
+            handleDisconnect(user.getName());
+        }
+    }
+
+    void handleDisconnect(String connId) {
         String roomCode = registry.roomOf(connId);
         if (roomCode == null) return;
 

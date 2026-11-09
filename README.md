@@ -1,107 +1,187 @@
-#  Qontrol - A Multiplayer Quiz Platform
+# Qontrol: a live multiplayer quiz platform
 
-A real-time multiplayer quiz game inspired by Kahoot — hosts create quizzes and launch live game sessions, players join with a room code, and everyone competes in real time with speed-based scoring and a live leaderboard.
+A real-time quiz game in the spirit of Kahoot. A host builds a quiz and opens a room, players join from their phones with a 6-digit PIN (no account needed), everyone answers against the clock, and speed-weighted scores climb a live leaderboard to a final podium.
 
-Built as a full-stack passion project to explore real-time systems, WebSockets, and full-stack architecture — with no deadline, just steady iteration.
-
----
-
-##  Features
-
--  Host authentication (JWT-based)
--  Quiz builder — create quizzes with multiple questions and options
--  Room codes — players join instantly, no account needed
--  Real-time gameplay via WebSockets (STOMP over SockJS)
--  Countdown-based, speed-weighted scoring
--  Live leaderboard between rounds + final podium
--  Mobile-responsive player view (join from your phone)
--  QR code join support
+Built as a full-stack project to explore real-time systems: WebSockets, server-authoritative game state, and reconnect handling.
 
 ---
 
-##  Tech Stack
+## Features
 
-**Frontend**
-- React (Vite)
-- Tailwind CSS
-- `@stomp/stompjs` + `sockjs-client` for real-time communication
-- Framer Motion for animations
+**Hosts**
+- Sign up / log in (JWT)
+- Quiz builder with a live **preview** of exactly what players will see
+- One click on **Host live** opens a lobby with a big PIN, a QR code, and a player list with remove buttons
+- Run the game: question timer, live answer counter, reveal with vote counts, top-5 leaderboard, final podium
 
-**Backend**
-- Spring Boot 3.x
-- Spring Security (JWT)
-- Spring WebSocket (STOMP)
-- Spring Data JPA + PostgreSQL
-- Redis *(planned — for scalable room state)*
+**Players**
+- Join with a PIN and a nickname, no account
+- Four answer tiles, each with its own colour **and shape** (works for colour-blind players)
+- A live "worth N points right now" counter that shrinks as time runs out
+- Refresh the page or lose Wi-Fi mid-game and you land back where you were, with your score intact
+
+**Under the hood**
+- The **server owns the clock and the scoring**. Clients only display a countdown, so a modified browser cannot award itself points
+- The correct answer is never sent to players before the reveal
+- Rate limiting on login, PIN lookups and joins; input validation; consistent JSON error responses
+- Sound effects are synthesised in the browser (Web Audio), so there are no audio files to ship
 
 ---
 
-##  Architecture
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, Vite, Tailwind CSS 4, Framer Motion, React Router |
+| Real-time | STOMP over SockJS (`@stomp/stompjs`, `sockjs-client`) |
+| Backend | Spring Boot 4.1 (Java 21), Spring Security + JWT, Spring WebSocket |
+| Database | PostgreSQL (quizzes and users) |
+| Live game state | In memory (see *Limitations*) |
+
+---
+
+## How a game works
 
 ```
-Host Browser ──REST──▶ Spring Boot API ──▶ PostgreSQL
-     │  ▲
-     │  │  WebSocket (start game, next question)
-     ▼  │
-Player Browser ──WebSocket (join, submit answer)──▶ Spring Boot API ──▶ Redis (room state)
+Host browser ──REST──▶ Spring Boot ──▶ PostgreSQL        (accounts, quizzes)
+     │
+     │  STOMP / WebSocket                (everything live)
+     ▼
+Spring Boot  ◀── STOMP ──  Player browsers (anonymous)
+  GameService: the state machine, timer and scoring
 ```
 
-Everyone connected to a game session subscribes to a room-specific topic (`/topic/room/{roomCode}`). The server broadcasts questions, leaderboard updates, and game state changes to all subscribers in that room simultaneously.
+`LOBBY → QUESTION → REVEAL → (QUESTION → REVEAL)* → FINISHED`
+
+Everyone in a room subscribes to `/topic/room/{PIN}`; the server broadcasts typed events (`QUESTION`, `REVEAL`, `FINISHED`, ...). Private results go to one player over `/user/queue/...`. The full message contract is in [`quiz-backend/GAME_PROTOCOL.md`](quiz-backend/GAME_PROTOCOL.md).
+
+**Scoring:** `points = base × (1 − (time used ÷ time limit) ÷ 2)`. Instant correct answer = full points, last-second correct answer = half, wrong or no answer = 0.
 
 ---
 
-##  Project Structure
+## Project structure
 
 ```
-quiz-platform/
-├── backend/     → Spring Boot API + WebSocket server
-└── frontend/    → React client (host + player views)
+Qontrol/
+├── src/                      React app
+│   ├── pages/                Landing, Login, Dashboard, QuizBuilder, and the game screens
+│   ├── components/game/      Answer tiles, countdown ring, leaderboard, podium...
+│   ├── context/              Game state (reducer) + the shared socket provider
+│   ├── services/             REST calls + gameClient.js (connect / join / sync / reconnect)
+│   └── hooks, utils/        Countdown, scoring helpers, sound
+├── quiz-backend/            Spring Boot API + WebSocket server
+│   └── src/main/java/com/quizapp/
+│       ├── controller, service, entity, dto, repository   quiz + auth CRUD
+│       ├── security/        JWT filter, rate limiting, startup checks
+│       └── game/            live-game engine (config, controller, model, service)
+└── scripts/ws-smoke-test.mjs   plays a whole game against a running backend
 ```
-
-See `/backend/README.md` and `/frontend/README.md` for setup specific to each app.
 
 ---
 
-##  Getting Started
+## Getting started
 
-### Prerequisites
-- Java 21+
-- Node.js 18+
-- PostgreSQL (or Docker)
+**Prerequisites:** Java 21, Node 18+, PostgreSQL (or Docker).
 
-### Backend
+### 1. Database
 ```bash
-cd backend
-# configure src/main/resources/application.yml with your DB credentials
-mvn spring-boot:run
+docker run --name quizdb -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=quizapp -p 5432:5432 -d postgres
 ```
-Runs at `http://localhost:8080`
 
-### Frontend
+### 2. Backend
 ```bash
-cd frontend
+cd quiz-backend
+./mvnw spring-boot:run          # Windows: mvnw.cmd spring-boot:run
+```
+Runs on `http://localhost:8080`. The defaults work with the Docker command above; override them with the environment variables below.
+
+### 3. Frontend
+```bash
+# in the project root
 npm install
-cp .env.example .env   # set VITE_API_URL=http://localhost:8080
+cp .env.example .env.local      # VITE_API_URL=http://localhost:8080
 npm run dev
 ```
-Runs at `http://localhost:5173`
+Runs on `http://localhost:5173`.
+
+### 4. Play
+1. Register as a host, create a quiz, click **Host live**.
+2. Open the join link (or scan the QR code) on your phone, or in a second browser window, and pick a nickname.
+3. Press **Start game** on the host screen.
 
 ---
 
-##  Roadmap
+## Configuration
 
-- [x] Auth + quiz CRUD
-- [x] Real-time room join + question broadcast
-- [x] Speed-based scoring + live leaderboard
-- [ ] Polished UI, sounds, QR join
+All backend settings are environment variables with development defaults (see `application.properties`).
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `SPRING_DATASOURCE_URL` / `_USERNAME` / `_PASSWORD` | local Postgres | Database |
+| `JWT_SECRET` | dev-only value | **Set this when deploying** (at least 32 chars). With `SPRING_PROFILES_ACTIVE=prod` the app refuses to start on the dev default |
+| `JWT_EXPIRATION` | `86400000` (24 h) | Token lifetime in ms |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | Comma-separated frontend origins (REST and WebSocket) |
+| `DDL_AUTO` | `update` | Use `validate` once you manage the schema yourself |
+| `SHOW_SQL` | `false` | Log SQL while debugging |
+| `FORWARD_HEADERS_STRATEGY` | `none` | Set to `native` behind a reverse proxy so rate limits see real visitor IPs |
+| `RATE_LIMIT_AUTH_PER_MIN` | `20` | Login/register attempts per IP |
+| `RATE_LIMIT_STATUS_PER_MIN` | `120` | PIN lookups per IP |
+| `RATE_LIMIT_JOIN_PER_MIN` | `200` | Join messages per IP (high on purpose: a classroom shares one IP) |
+
+Frontend: `VITE_API_URL` (the backend URL).
+
+---
+
+## Testing
+
+```bash
+cd quiz-backend && ./mvnw test      # unit tests: scoring, game engine, rate limiter, security checks
+```
+`QuizBackendApplicationTests` (context loads) needs the database running; the others need nothing.
+
+End-to-end against a running backend:
+```bash
+node scripts/ws-smoke-test.mjs      # registers a host, builds a quiz, plays a full game with two bots
+```
+
+---
+
+## Security notes
+
+- Passwords are hashed with BCrypt; hosts authenticate with a signed JWT.
+- Quizzes (which contain the answers) can only be read by their owner.
+- Players are anonymous. Their identity is a secret reconnect token issued on join, stored in the tab's `sessionStorage`.
+- Login, register, PIN lookup and join are rate limited; error responses never include stack traces or SQL.
+- Before deploying: set `JWT_SECRET`, set `CORS_ALLOWED_ORIGINS` to your real frontend URL, and set `FORWARD_HEADERS_STRATEGY=native` if you are behind a proxy.
+
+---
+
+## Limitations
+
+- Live games are kept **in memory** on one backend instance. Restarting the backend ends running games, and you cannot run several instances yet. Moving `GameRegistry` to Redis is the planned fix.
+- If the host closes their tab mid-game, play pauses at the next reveal until they reopen the same `/host/<PIN>` link.
+- Free hosting tiers that sleep when idle will drop a running game.
+
+---
+
+## Roadmap
+
+- [x] Host auth and quiz CRUD
+- [x] Real-time rooms: join by PIN, lobby, live questions
+- [x] Server-side speed scoring, live leaderboard, final podium
+- [x] Reconnect and refresh handling
+- [x] Sound effects, QR join, mobile-first player screen
+- [x] Rate limiting, validation, clean error responses
+- [ ] Redis-backed game state (multiple instances)
 - [ ] Public quiz library
+- [ ] More question types (true/false, image, type-the-answer)
 - [ ] Team mode
-- [ ] Redis-backed room state for scaling
-- [ ] Post-game analytics for hosts
+- [ ] Post-game analytics (which questions tripped people up)
+- [ ] Docker Compose for one-command setup
 
 ---
 
-##  Contributors
+## Contributors
 
-- **Md. Fahim Hassan** — Frontend (React)
-- **Shahriar Islam Tawsif** — Backend (Spring Boot)
+- **Md. Fahim Hassan**: Frontend (React)
+- **Shahriar Islam Tawsif**: Backend (Spring Boot)

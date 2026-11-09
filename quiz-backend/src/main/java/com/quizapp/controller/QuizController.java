@@ -37,8 +37,9 @@ public class QuizController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<QuizResponse> getQuizById(@PathVariable Long id) {
-        QuizResponse response = quizService.getQuizById(id);
+    public ResponseEntity<QuizResponse> getQuizById(@PathVariable Long id,
+                                                    @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        QuizResponse response = quizService.getQuizById(id, userPrincipal.getUser());
         return ResponseEntity.ok(response);
     }
 

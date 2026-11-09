@@ -43,7 +43,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            logger.error("Cannot set user authentication: {}", e);
+            // Expired / malformed tokens are routine. The request simply stays unauthenticated
+            // and the 401 handler answers it, so a one-line log is enough.
+            logger.debug("Ignoring invalid JWT: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);

@@ -1,6 +1,3 @@
-
-
-
 package com.quizapp.dto.request;
 
 import jakarta.validation.constraints.Email;
@@ -23,9 +20,10 @@ public class RegisterRequest {
 
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
+    @Size(max = 255, message = "Email must be at most 255 characters")
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters long")
+    @Size(min = 6, max = 72, message = "Password must be between 6 and 72 characters")
     private String password;
 }

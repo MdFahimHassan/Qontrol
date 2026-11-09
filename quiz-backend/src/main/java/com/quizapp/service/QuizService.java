@@ -73,11 +73,10 @@ public class QuizService {
                 .collect(Collectors.toList());
     }
 
+    /** A quiz includes its correct answers, so only its owner may read it. */
     @Transactional(readOnly = true)
-    public QuizResponse getQuizById(Long id) {
-        Quiz quiz = quizRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Quiz not found with id: " + id));
-        return mapToQuizResponse(quiz);
+    public QuizResponse getQuizById(Long id, User currentUser) {
+        return getOwnedQuiz(id, currentUser);
     }
 
     @Transactional

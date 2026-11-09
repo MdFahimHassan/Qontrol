@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { useAuth } from '../hooks/useAuth';
 import DoodleBackground from '../components/common/DoodleBackground';
@@ -10,7 +10,12 @@ import Button from '../components/common/Button';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const location = useLocation();
+  const [params] = useSearchParams();
+  // Arrive here with a reason when a session expired or a game connection was refused.
+  const [error, setError] = useState(
+    location.state?.notice || (params.get('expired') ? 'Your session expired. Please log in again.' : '')
+  );
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();

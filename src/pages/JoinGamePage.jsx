@@ -11,6 +11,9 @@ import Button from '../components/common/Button';
 
 function messageFor(err) {
   if (err?.isAxiosError) {
+    if (err.response?.status === 429) {
+      return 'Too many attempts. Wait a minute and try again.';
+    }
     if (err.response?.status === 404) {
       return "We couldn't find a game with that PIN. Check the number on the host's screen.";
     }

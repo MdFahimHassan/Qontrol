@@ -31,6 +31,7 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final CustomUserDetailsService userDetailsService;
+    private final RateLimitService rateLimitService;
 
     // Comma-separated list of origins allowed to call this API.
     // Vite's default dev server runs on http://localhost:5173.
@@ -52,8 +53,16 @@ public class SecurityConfig {
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
             )
+            // Clean JSON for "not logged in" / "not allowed" instead of an empty 401/403 body.
+            .exceptionHandling(errors -> errors
+                .authenticationEntryPoint((request, response, ex) -> JsonErrors.write(response, 401,
+                        "Unauthorized", "Please log in to continue.", request.getRequestURI()))
+                .accessDeniedHandler((request, response, ex) -> JsonErrors.write(response, 403,
+                        "Forbidden", "You don't have permission to do that.", request.getRequestURI()))
+            )
             .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(new RateLimitFilter(rateLimitService), JwtAuthFilter.class);
 
         return http.build();
     }

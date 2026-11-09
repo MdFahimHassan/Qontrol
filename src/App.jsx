@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { MotionConfig } from 'framer-motion';
 import { useAuth } from './hooks/useAuth';
 import { GameSocketProvider } from './context/GameSocketContext';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -27,6 +28,7 @@ function App({ socketFactory }) {
     <MotionConfig reducedMotion="user">
       <GameSocketProvider socketFactory={socketFactory}>
         <div className="min-h-screen bg-pitch text-chalk font-body">
+          <ErrorBoundary>
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
@@ -93,6 +95,7 @@ function App({ socketFactory }) {
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </ErrorBoundary>
         </div>
       </GameSocketProvider>
     </MotionConfig>
