@@ -4,6 +4,16 @@ A real-time quiz game in the spirit of Kahoot. A host builds a quiz and opens a 
 
 Built as a full-stack project to explore real-time systems: WebSockets, server-authoritative game state, and reconnect handling.
 
+
+## Live demo
+
+**Play it:** https://qontrol-virid.vercel.app
+
+1. Open the link and choose **Host login** → **Register as host**, then build a quiz and click **Host live**.
+2. On your phone, scan the QR code (or open the join link) and pick a nickname.
+
+> The backend runs on a free tier that goes to sleep when idle, so the **first request can take up to a minute**. Open the site once before showing it to anyone. Games in progress are lost if the free server restarts.
+
 ---
 
 ## Features
@@ -154,6 +164,20 @@ node scripts/ws-smoke-test.mjs      # registers a host, builds a quiz, plays a f
 - Login, register, PIN lookup and join are rate limited; error responses never include stack traces or SQL.
 - Before deploying: set `JWT_SECRET`, set `CORS_ALLOWED_ORIGINS` to your real frontend URL, and set `FORWARD_HEADERS_STRATEGY=native` if you are behind a proxy.
 
+## Deploying
+
+The live demo runs on free tiers, and the whole setup costs nothing:
+
+| Part | Host | Notes |
+|---|---|---|
+| Frontend (static React build) | Vercel | `vercel.json` rewrites every path to `index.html` so links like `/join/123456` survive a refresh. Set `VITE_API_URL` to the backend URL |
+| Backend (Spring Boot, Docker) | Render | Root directory `quiz-backend`, uses `quiz-backend/Dockerfile`. Health check: `/api/health` |
+| Database | Neon (PostgreSQL) | Use the direct (non-pooled) connection string as `jdbc:postgresql://HOST/DB?sslmode=require`, with the username and password in their own variables |
+
+Backend environment variables for a deployment: `SPRING_PROFILES_ACTIVE=prod`, `JWT_SECRET`, `SPRING_DATASOURCE_URL` / `_USERNAME` / `_PASSWORD`, `CORS_ALLOWED_ORIGINS` (your exact frontend URL, no trailing slash) and `FORWARD_HEADERS_STRATEGY=native`. See *Configuration* above for the full list.
+
+Run **one** backend instance only: live game state is in memory. For a classroom or event, a paid always-on instance avoids the free tier's sleep and restarts.
+
 ---
 
 ## Limitations
@@ -172,6 +196,7 @@ node scripts/ws-smoke-test.mjs      # registers a host, builds a quiz, plays a f
 - [x] Reconnect and refresh handling
 - [x] Sound effects, QR join, mobile-first player screen
 - [x] Rate limiting, validation, clean error responses
+- [x] Deployed (Vercel + Render + Neon)
 - [ ] Redis-backed game state (multiple instances)
 - [ ] Public quiz library
 - [ ] More question types (true/false, image, type-the-answer)
