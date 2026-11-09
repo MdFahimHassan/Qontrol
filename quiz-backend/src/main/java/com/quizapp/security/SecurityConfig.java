@@ -50,6 +50,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 // Players have no account: let them check that a room code exists before joining.
                 .requestMatchers(HttpMethod.GET, "/api/games/*/status").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
             )
